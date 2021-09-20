@@ -38,43 +38,43 @@ app.get('/', async function (req, res) {
 
 app.get('/comments', async function (req, res) {
 	// get from client input
-	const searchCriteria = {
-		id: '',
-		postId: '',
-		title: '',
-		body: 'occaecati quia ipsa id fugit',
-		email: '',
-		name: '',
-	};
+	// console.log('req.query', req.query);
 
-	const { data } = await axios.get(
-		'https://jsonplaceholder.typicode.com/comments',
-		{ headers: { 'Content-Type': 'application/json' } }
-	);
+	const { data } = await axios
+		.get('https://jsonplaceholder.typicode.com/comments', {
+			headers: { 'Content-Type': 'application/json' },
+		})
+		.catch((err) => console.log(err));
 
-	const searchResult = data.filter((e) => {
-		const { id, postId, title, body, email, name } = searchCriteria;
-		if (id) {
-			return e.id == id;
-		}
-		if (postId) {
-			return e.postId == postId;
-		}
-		if (title) {
-			return e.title && e.title.includes(title);
-		}
-		if (body) {
-			return e.body && e.body.includes(body);
-		}
-		if (email) {
-			return e.email === email;
-		}
-
-		if (name) {
-			const da = e.name && e.name.includes(name);
-			return da;
-		}
+	const arr = [];
+	Object.entries(req.query).forEach(([k, v]) => {
+		arr.push({ [k]: v });
 	});
+
+	// console.log('arr', arr);
+	let searchResult;
+	// for one query
+	if (arr.length < 2) {
+		searchResult = arr.map((e, index) => {
+			if (arr.length === 1) {
+				// check for match field
+				return data.filter((each, index) => {
+					return each[Object.keys(e)[0]] == Object.values(e)[0];
+				});
+			}
+		});
+	}
+
+	// for multiple query
+	if (arr.length > 1) {
+		searchResult = data.filter((each) => {
+			return Object.keys(req.query).every((key) => {
+				if (each.hasOwnProperty(key)) {
+					return each[key] == req.query[key];
+				}
+			});
+		});
+	}
 
 	res.send(searchResult);
 });
